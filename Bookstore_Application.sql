@@ -378,7 +378,163 @@ as
 	inner join Books b
 	on c.customer_id = b.book_id
 
-select * from Churn_Modelling
 
-use Churn_Modelling
+--selsId, DealerName, bookId, bookName,Price
+--booktable=>category
 
+create table sales
+(
+	sales_Id int identity(1,1) primary key,
+	dealerName varchar(50),
+	book_id int,
+	book_name varchar(50),
+	category varchar(50),
+	price int
+)
+drop table sales
+
+select * from sys.databases
+
+
+select bookPrice - salesPrice
+from sales
+
+select * from sales
+select * from Order_details
+select * from Books
+
+--get hieghest price of book
+
+select MAX(price) as Price from Books
+
+create procedure sp_getOrderData
+as
+begin
+declare @sales int
+select 
+	@sales = sum (price * quantity )
+	from Books
+	inner join Order_details on Order_details.book_id=Books.book_id
+	where
+	year(order_PlacedDate) = 2022;
+	select @sales as TotalAmountperyear ;
+	if @sales <200
+	begin 
+	print 'In 2022 Great sale amount IS GREATER THAN 200'
+	end
+	else
+	begin 
+	print 'Inb 2022 The sale amount is less than 200'
+	end
+end
+
+exec sp_getOrderData
+
+create procedure sp_getdetails
+as
+begin
+select fname,lname,book_name,author_name,city ,state_name
+from customer
+join Books on customer.book_id = Books.book_id
+join  Address on customer.Address_id = Address.Address_id
+end
+
+exec sp_getdetails
+
+
+create function Fn_Order_Details
+(
+@order_id int,
+@Book_ID int
+)      
+returns table       
+as      
+return(select Books.book_name, Books.author_name from Books INNER JOIN Order_details ON Order_details.book_id = Books.book_id
+		where Order_details.order_id between @order_id and @Book_ID)
+
+alter procedure sp_getfunctiondata
+(
+@Order_ID int,
+@Books_ID int
+)
+as
+begin
+select * from  Fn_Order_Details (@Order_ID,@Books_ID)
+end
+exec sp_getfunctiondata 2 ,5
+
+
+Declare 
+	@book_name varchar(50),
+	@price int
+declare cursor_bookDetails cursor
+for
+	select
+		book_name,
+		price
+	from Books
+open cursor_bookDetails
+fetch next from cursor_bookDetails into
+	@book_name,
+	@price
+while @@FETCH_STATUS = 0
+begin 
+	print @book_name + cast(@price as varchar)
+	fetch next from cursor_bookDetails into
+		@book_name,
+		@price
+end
+close cursor_bookDetails
+deallocate cursor_bookDetails
+
+
+------view---
+create view vbookByBookName
+as
+select book_name, author_name, price
+from Customer
+join Books on Customer.customer_id = Books.book_id
+
+select * from vbookByBookName
+
+create view vSummerizeData
+as
+select book_name ,count(*) as Totalbook
+from Customer
+join Books on Customer.book_id = Books.book_id
+join  Address on Customer.Address_id = Address.Address_id
+group by book_name
+
+select * from vSummerizeData
+
+---Transaction(commit, Rollback, savepoint) in sql---
+
+--commit
+begin transaction
+insert into Customer values
+('Anikit','Sahu','ankit@gmail.com',2,2,123345679)
+commit
+
+select * from Customer
+
+----Rollback data-----
+begin transaction
+update Customer set lname = 'Roy' where customer_id = 3
+rollback
+
+----savepoint 1-----
+begin transaction
+update Customer set lname = 'Roy' where customer_id =3
+save transaction save1
+
+----savepoint 2-----
+begin transaction
+insert into Customer values
+('Ram','Sen','ram@gmail.com',4,2,123454017)
+insert into Customer values
+('Arka','Dutta','arka@gmail.com',5,1,124454117)
+save transaction save2
+
+---rollback savepoint-----
+select * from Customer
+rollback transaction save2

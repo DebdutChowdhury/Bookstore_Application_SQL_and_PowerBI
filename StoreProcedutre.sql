@@ -332,3 +332,6 @@ end catch
 
 --run delete customer procedure
 exec sp_DeleteAddress 9
+
+--selsId, DealerName, bookId, bookName,Price
+--booktable=>category
