@@ -538,3 +538,5 @@ save transaction save2
 ---rollback savepoint-----
 select * from Customer
 rollback transaction save2
+
+Select @@TRANCOUNT As TransactionCount
